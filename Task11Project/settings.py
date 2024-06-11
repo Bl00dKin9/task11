@@ -77,8 +77,12 @@ WSGI_APPLICATION = 'Task11Project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'hakaton',
+        'USER': 'root',
+        'PASSWORD': 'Wargateqwert4',
+        'HOST': '46.243.227.44',
+        'PORT': '5432',
     }
 }
 
