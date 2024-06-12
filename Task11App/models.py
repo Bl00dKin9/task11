@@ -1,4 +1,5 @@
 from django.db import models
+from  django.contrib.auth.models import User
 
 
 # Create your models here.
@@ -45,6 +46,7 @@ class Service(models.Model):
 
 
 class InvoiceForPayment(models.Model):
+    user = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.CASCADE, null=True)
     company = models.CharField(verbose_name="Компания")
     year = models.IntegerField(verbose_name="Год")
     invoice_number = models.CharField(verbose_name="Номер счета")
@@ -63,6 +65,7 @@ class InvoiceForPayment(models.Model):
 
 
 class DistributedInvoiceForPayment(models.Model):
+    user = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.CASCADE, null=True)
     company = models.CharField(verbose_name="Компания")
     year = models.IntegerField(verbose_name="Год")
     invoice_number = models.CharField(verbose_name="Номер счета")
