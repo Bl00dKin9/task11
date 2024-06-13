@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from . import views
 from .views import *
 
 
@@ -14,5 +15,6 @@ router.register('api/distributed_invoice_for_payment', DistributedInvoiceForPaym
 
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
+    path('api/<string:table_name>/upload', views.upload_file),
 ]
