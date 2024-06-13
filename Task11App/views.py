@@ -49,7 +49,7 @@ class DistributedInvoiceForPaymentViewSet(viewsets.ModelViewSet):
     serializer_class = DistributedInvoiceForPaymentSerializer
 
 
-def upload_building_file(worksheet, user):
+def upload_building_file(worksheet):
     buildings = []
     try:
         for row in worksheet.iter_rows(min_row=2):
@@ -62,7 +62,7 @@ def upload_building_file(worksheet, user):
     return HttpResponse(status=200)
 
 
-def upload_contract_file(worksheet, user):
+def upload_contract_file(worksheet):
     contracts = []
     try:
         for row in worksheet.iter_rows(min_row=2):
@@ -74,7 +74,7 @@ def upload_contract_file(worksheet, user):
     return HttpResponse(status=200)
 
 
-def upload_contract_building_connection_file(worksheet, user):
+def upload_contract_building_connection_file(worksheet):
     contract_building_connections = []
     try:
         for row in worksheet.iter_rows(min_row=2):
@@ -87,7 +87,7 @@ def upload_contract_building_connection_file(worksheet, user):
     return HttpResponse(status=200)
 
 
-def upload_fixed_asset_file(worksheet, user):
+def upload_fixed_asset_file(worksheet):
     fixed_assets = []
     try:
         for row in worksheet.iter_rows(min_row=2):
@@ -102,7 +102,7 @@ def upload_fixed_asset_file(worksheet, user):
     return HttpResponse(status=200)
 
 
-def upload_service_file(worksheet, user):
+def upload_service_file(worksheet):
     services = []
     try:
         for row in worksheet.iter_rows(min_row=2):
@@ -114,12 +114,12 @@ def upload_service_file(worksheet, user):
     return HttpResponse(status=200)
 
 
-def upload_invoice_for_payment_file(worksheet, user):
+def upload_invoice_for_payment_file(worksheet):
     invoice_for_payments = []
     try:
         for row in worksheet.iter_rows(min_row=2):
             invoice_for_payment = InvoiceForPayment(company=row[0].value, year=row[1].value, invoice_number=row[2].value, invoice_position=row[3].value, service_id=row[4].value,
-                                                    contract_id=row[5].value, invoice_reflection_in_the_accounting_system_date=row[6].value, cost_excluding_VAT=row[7].value, user=user)
+                                                    contract_id=row[5].value, invoice_reflection_in_the_accounting_system_date=row[6].value, cost_excluding_VAT=row[7].value)
             invoice_for_payments.append(invoice_for_payment)
         InvoiceForPayment.objects.bulk_create(invoice_for_payments)
     except Exception as err:
@@ -127,7 +127,7 @@ def upload_invoice_for_payment_file(worksheet, user):
     return HttpResponse(status=200)
 
 
-def upload_distributed_invoice_for_payment_file(worksheet, user):
+def upload_distributed_invoice_for_payment_file(worksheet):
     distributed_invoice_for_payments = []
     try:
         for row in worksheet.iter_rows(min_row=2):
@@ -136,7 +136,7 @@ def upload_distributed_invoice_for_payment_file(worksheet, user):
                                                                            contract_id=row[6].value, service_id=row[7].value, service_class=row[8].value, building_id=row[9].value,
                                                                            fixed_asset_class=row[10].value, fixed_asset_id=row[11].value, is_used_in_main_activity=(row[12].value == 'X'),
                                                                            is_used_in_rent=(row[13].value == 'X'), square=row[14].value, distribution_sum=row[15].value,
-                                                                           general_ledger_account=row[16].value, user=user)
+                                                                           general_ledger_account=row[16].value)
             distributed_invoice_for_payments.append(distributed_invoice_for_payment)
         DistributedInvoiceForPayment.objects.bulk_create(distributed_invoice_for_payments)
     except Exception as err:
@@ -146,17 +146,10 @@ def upload_distributed_invoice_for_payment_file(worksheet, user):
 
 @api_view(['POST'])
 def upload_file(request, table_name):
-    user = None
-    if table_name == "invoice_for_payment" or table_name == "distributed_invoice_for_payment":
-        try:
-            username = request.data['username']
-            user = User.objects.get(username=username)
-        except ObjectDoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
     excel_file = request.FILES["excel_file"]
     wb = openpyxl.load_workbook(excel_file)
     worksheet = wb["Sheet1"]
-    response = globals()['upload_' + table_name + '_file'](worksheet, user)
+    response = globals()['upload_' + table_name + '_file'](worksheet)
 
     return response
 
