@@ -16,5 +16,6 @@ router.register('api/distributed_invoice_for_payment', DistributedInvoiceForPaym
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('api/<string:table_name>/upload', views.upload_file),
+    path('index', views.index),
+    path('api/<str:table_name>/upload', views.upload_file),
 ]

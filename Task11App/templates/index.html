@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Task 11
+        </title>
+    </head>
+    <body style="margin-top: 30px;margin-left: 30px;">
+        {{object}}
+        <form method="POST">
+            {% csrf_token %}
+            <select name = "selected_object">
+                <option value="building" {% if object == 'building' %} selected="selected" {% endif %}>Здания</option>
+                <option value="contract" {% if object == 'contract' %} selected="selected" {% endif %}>Договоры</option>
+                <option value="contract_building_connection" {% if object == 'contract_building_connection' %} selected="selected" {% endif %}>Связи зданий с договорами</option>
+                <option value="fixed_asset" {% if object == 'fixed_asset' %} selected="selected" {% endif %}>Основные средства</option>
+                <option value="service" {% if object == 'service' %} selected="selected" {% endif %}>Услуги</option>
+                <option value="invoice_for_payment" {% if object == 'invoice_for_payment' %} selected="selected" {% endif %}>Счета на оплату</option>
+                <option value="distributed_invoice_for_payment" {% if object == 'distributed_invoice_for_payment' %} selected="selected" {% endif %}>Распределённые счета на оплату</option>
+            </select>
+            <input type="submit"
+                   name="choose"
+                   value="Выбрать"
+                   style="border: 1px solid green; padding:5px; border-radius: 2px; cursor: pointer;">
+            <input type="submit"
+                   name="delete"
+                   value="Delete"
+                   style="border: 1px solid green; padding:5px; border-radius: 2px; cursor: pointer;">
+        </form>
+        <form action="../api/{{object}}/upload " method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file"
+                   title="Upload excel file"
+                   name="excel_file"
+                   style="border: 1px solid black; padding: 5px;"
+                   required="required">
+            <p>
+            <input type="submit"
+                   value="Upload"
+                   style="border: 1px solid green; padding:5px; border-radius: 2px; cursor: pointer;">
+        </form>
+    </body>
+</html>
