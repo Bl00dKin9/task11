@@ -27,7 +27,7 @@
                    value="Delete"
                    style="border: 1px solid green; padding:5px; border-radius: 2px; cursor: pointer;">
         </form>
-        <form action="../api/{{object}}/upload " method="POST" enctype="multipart/form-data">
+        <form action="../api/{{object}}/upload_excel " method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="file"
                    title="Upload excel file"

@@ -166,16 +166,57 @@ def upload_file(request, table_name):
 def upload_json(request, table_name):
     serializer = serializer_class_lookup[table_name](data=request.data, many=True)
     if serializer.is_valid():
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        id_list = []
+        res = serializer.save()
+        for i in range(len(res)):
+            id_list.append(res[i].id)
+        return start_distribution(id_list)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
-def start_distribution(request, table_name):
-    serializer = serializer_class_lookup[table_name](data=request.data, many=True)
-    if serializer.is_valid():
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def start_distribution(id_list):
+    try:
+        for i in range(len(id_list)):
+            distributed_invoice_for_payments = []
+            count = 1
+            square_sum = 0
+            invoice_for_payment = InvoiceForPayment.objects.get(pk=id_list[i])
+            company = invoice_for_payment.company
+            year = invoice_for_payment.year
+            invoice_number = invoice_for_payment.invoice_number
+            invoice_position = invoice_for_payment.invoice_position
+            service_id = invoice_for_payment.service_id
+            services = Service.objects.filter(service_id=service_id)
+            service_class = services[0].service_class
+            reflection_in_the_accounting_system_date = invoice_for_payment.invoice_reflection_in_the_accounting_system_date
+            cost_excluding_VAT = invoice_for_payment.cost_excluding_VAT
+            contract_id = invoice_for_payment.contract_id
+            contract_building_connections = ContractBuildingConnection.objects.filter(contract_id=contract_id)
+            for j in range(len(contract_building_connections)):
+                building_id = contract_building_connections[j].building_id
+                fixed_assets = FixedAsset.objects.filter(building_id=building_id)
+                for k in range(len(fixed_assets)):
+                    fixed_asset_id = fixed_assets[k].fixed_asset_id
+                    fixed_asset_class = fixed_assets[k].fixed_asset_class
+                    is_used_in_main_activity = fixed_assets[k].is_used_in_main_activity
+                    is_used_in_rent = fixed_assets[k].is_used_in_rent
+                    square = fixed_assets[k].square
+                    distributed_invoice_for_payment = DistributedInvoiceForPayment(company=company, year=year, invoice_number=invoice_number, invoice_position=invoice_position,
+                                                                                   distribution_position_number=count,
+                                                                                   reflection_in_the_accounting_system_date=reflection_in_the_accounting_system_date,
+                                                                                   contract_id=contract_id, service_id=service_id, service_class=service_class, building_id=building_id,
+                                                                                   fixed_asset_class=fixed_asset_class, fixed_asset_id=fixed_asset_id,
+                                                                                   is_used_in_main_activity=is_used_in_main_activity, is_used_in_rent=is_used_in_rent,
+                                                                                   square=square, distribution_sum=0)
+                    distributed_invoice_for_payments.append(distributed_invoice_for_payment)
+                    count += 1
+                    square_sum += square
+            for j in range(len(distributed_invoice_for_payments)):
+                distributed_invoice_for_payments[j].distribution_sum = cost_excluding_VAT * distributed_invoice_for_payments[j].square / square_sum
+            DistributedInvoiceForPayment.objects.bulk_create(distributed_invoice_for_payments)
+    except Exception as err:
+        return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    return HttpResponse(status=200)
 
 
 def index(request):
