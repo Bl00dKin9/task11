@@ -49,6 +49,15 @@ class DistributedInvoiceForPaymentViewSet(viewsets.ModelViewSet):
     serializer_class = DistributedInvoiceForPaymentSerializer
 
 
+class_lookup = {'building': Building, 'contract': Contract, 'contract_building_connection': ContractBuildingConnection, 'fixed_asset': FixedAsset,
+                        'service': Service, 'invoice_for_payment': InvoiceForPayment, 'distributed_invoice_for_payment': DistributedInvoiceForPayment}
+
+
+serializer_class_lookup = {'building': BuildingSerializer, 'contract': ContractSerializer, 'contract_building_connection': ContractBuildingConnectionSerializer,
+                           'fixed_asset': FixedAssetSerializer, 'service': ServiceSerializer, 'invoice_for_payment': InvoiceForPaymentSerializer,
+                           'distributed_invoice_for_payment': DistributedInvoiceForPaymentSerializer}
+
+
 def upload_building_file(worksheet):
     buildings = []
     try:
@@ -150,8 +159,23 @@ def upload_file(request, table_name):
     wb = openpyxl.load_workbook(excel_file)
     worksheet = wb["Sheet1"]
     response = globals()['upload_' + table_name + '_file'](worksheet)
-
     return response
+
+
+@api_view(['POST'])
+def upload_json(request, table_name):
+    serializer = serializer_class_lookup[table_name](data=request.data, many=True)
+    if serializer.is_valid():
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def start_distribution(request, table_name):
+    serializer = serializer_class_lookup[table_name](data=request.data, many=True)
+    if serializer.is_valid():
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def index(request):
@@ -159,7 +183,5 @@ def index(request):
     if selected_object == "None":
         selected_object = 'building'
     if 'delete' in request.POST:
-        class_lookup = {'building': Building, 'contract': Contract, 'contract_building_connection': ContractBuildingConnection, 'fixed_asset': FixedAsset,
-                        'service': Service, 'invoice_for_payment': InvoiceForPayment, 'distributed_invoice_for_payment': DistributedInvoiceForPayment}
         class_lookup[selected_object].objects.all().delete()
     return render(request, 'index.html', {"object": selected_object})
