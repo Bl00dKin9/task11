@@ -166,18 +166,20 @@ def upload_file(request, table_name):
 def upload_json(request, table_name):
     serializer = serializer_class_lookup[table_name](data=request.data, many=True)
     if serializer.is_valid():
-        id_list = []
         res = serializer.save()
-        for i in range(len(res)):
-            id_list.append(res[i].id)
-        return start_distribution(id_list)
+        if (table_name == "invoice_for_payment"):
+            id_list = []
+            for i in range(len(res)):
+                id_list.append(res[i].id)
+            return start_distribution(id_list)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def start_distribution(id_list):
     try:
+        distributed_invoice_for_payments = []
         for i in range(len(id_list)):
-            distributed_invoice_for_payments = []
             count = 1
             square_sum = 0
             invoice_for_payment = InvoiceForPayment.objects.get(pk=id_list[i])
@@ -213,10 +215,12 @@ def start_distribution(id_list):
                     square_sum += square
             for j in range(len(distributed_invoice_for_payments)):
                 distributed_invoice_for_payments[j].distribution_sum = cost_excluding_VAT * distributed_invoice_for_payments[j].square / square_sum
-            DistributedInvoiceForPayment.objects.bulk_create(distributed_invoice_for_payments)
+        serializer = DistributedInvoiceForPaymentWithoutIdSerializer(distributed_invoice_for_payments, many=True)
+        print(serializer)
+        #DistributedInvoiceForPayment.objects.bulk_create(distributed_invoice_for_payments)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-    return HttpResponse(status=200)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 def index(request):
