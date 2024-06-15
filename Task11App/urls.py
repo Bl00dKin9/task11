@@ -18,4 +18,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('index', views.index),
     path('api/<str:table_name>/upload', views.upload_file),
+    path('user/registration/', registration)
 ]
