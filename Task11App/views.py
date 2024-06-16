@@ -55,7 +55,7 @@ class_lookup = {'building': Building, 'contract': Contract, 'contract_building_c
 
 serializer_class_lookup = {'building': BuildingSerializer, 'contract': ContractSerializer, 'contract_building_connection': ContractBuildingConnectionSerializer,
                            'fixed_asset': FixedAssetSerializer, 'service': ServiceSerializer, 'invoice_for_payment': InvoiceForPaymentSerializer,
-                           'distributed_invoice_for_payment': DistributedInvoiceForPaymentWithoutIdSerializerSerializer}
+                           'distributed_invoice_for_payment': DistributedInvoiceForPaymentWithoutIdSerializer}
 
 
 def upload_building_file(worksheet):
