@@ -60,6 +60,7 @@ serializer_class_lookup = {'building': BuildingSerializer, 'contract': ContractS
                            'distributed_invoice_for_payment': DistributedInvoiceForPaymentWithoutIdSerializer}
 
 
+
 def deserialize_building(data):
     building = Building(building_id=data['building_id'], possession_beginning_date=data['possession_beginning_date'],
                         possession_ending_date=data['possession_ending_date'], measurement_ending_date=data['measurement_ending_date'],
@@ -111,6 +112,7 @@ def deserialize_distributed_invoice_for_payment(data):
                                                                    is_used_in_main_activity=data['is_used_in_main_activity'], is_used_in_rent=data['is_used_in_rent'],
                                                                    square=data['square'], distribution_sum=data['distribution_sum'], general_ledger_account=data['general_ledger_account'])
     return distributed_invoice_for_payment
+
 
 
 def upload_building_file(worksheet):
