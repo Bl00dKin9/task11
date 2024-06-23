@@ -49,3 +49,4 @@ class DistributedInvoiceForPaymentWithoutIdSerializer(serializers.ModelSerialize
         model = DistributedInvoiceForPayment
         fields = ('company', 'year', 'invoice_number', 'invoice_position', 'distribution_position_number', 'reflection_in_the_accounting_system_date', 'contract_id', 'service_id',
                   'service_class', 'building_id', 'fixed_asset_class', 'fixed_asset_id', 'is_used_in_main_activity', 'is_used_in_rent', 'square', 'distribution_sum', 'general_ledger_account')
+
