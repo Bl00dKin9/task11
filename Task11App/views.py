@@ -15,7 +15,9 @@ from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from decimal import Decimal
+import tensorflow as tf
 from tensorflow.keras.models import load_model
+import tensorflow_hub as hub
 import numpy as np
 
 class BuildingViewSet(viewsets.ModelViewSet):
@@ -53,6 +55,10 @@ class DistributedInvoiceForPaymentViewSet(viewsets.ModelViewSet):
     serializer_class = DistributedInvoiceForPaymentSerializer
 
 
+account_generate_model = load_model('testmodel2.h5')
+
+
+
 class_lookup = {'building': Building, 'contract': Contract, 'contract_building_connection': ContractBuildingConnection, 'fixed_asset': FixedAsset,
                         'service': Service, 'invoice_for_payment': InvoiceForPayment, 'distributed_invoice_for_payment': DistributedInvoiceForPayment}
 
@@ -60,6 +66,22 @@ class_lookup = {'building': Building, 'contract': Contract, 'contract_building_c
 serializer_class_lookup = {'building': BuildingSerializer, 'contract': ContractSerializer, 'contract_building_connection': ContractBuildingConnectionSerializer,
                            'fixed_asset': FixedAssetSerializer, 'service': ServiceSerializer, 'invoice_for_payment': InvoiceForPaymentSerializer,
                            'distributed_invoice_for_payment': DistributedInvoiceForPaymentWithoutIdSerializer}
+
+
+def generate_account(model, service_class, fixed_asset_class, is_used_in_main_activity, is_used_in_rent):
+  service_classes = ['S001', 'S004', 'S005', 'S008', 'S012', 'S025', 'S036', 'S038', 'S063', 'S064', 'S070', 'S076', 'S079']
+  fixed_asset_classes = ['60401018', '60401099', '60401109', '60404999', '60804001', '61907996', '61908996', '62001001', '62001M01', '62001M04', '62101001', '62101004', '91507998']
+  general_ledger_account = [7047504010, 7047504020, 7047505010, 7047505020, 7047805010, 7047805030, 7048208010, 7048208020, 7048209010, 7048209020, 7048401010, 7048401020, 7048406010, 7048406020, 7048414960, 7048414970]
+
+  try:
+    ind1 = service_classes.index(service_class)
+    ind2 = fixed_asset_classes.index(fixed_asset_class)
+
+    preg = model.predict(np.array([[ind1, ind2, is_used_in_main_activity, is_used_in_rent]]))
+    preg = np.argmax(preg)
+    return general_ledger_account[preg]
+  except Exception as err:
+    return None;
 
 
 def deserialize_building(data):
@@ -282,6 +304,7 @@ def start_distribution(invoice_for_payments):
                                                                                    fixed_asset_class=fixed_asset_class, fixed_asset_id=fixed_asset_id,
                                                                                    is_used_in_main_activity=is_used_in_main_activity, is_used_in_rent=is_used_in_rent,
                                                                                    square=square, distribution_sum=0)
+                    distributed_invoice_for_payment.general_ledger_account = generate_account(account_generate_model, service_class, fixed_asset_class, is_used_in_main_activity, is_used_in_rent)
                     distributed_invoice_for_payments.append(distributed_invoice_for_payment)
                     count += 1
                     square_sum += square
