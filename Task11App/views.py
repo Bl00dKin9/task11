@@ -120,7 +120,7 @@ def upload_building_file(worksheet):
                 building = Building(building_id=row[0].value, possession_beginning_date=row[1].value, possession_ending_date=row[2].value, measurement_ending_date=row[3].value,
                                     measurement_beginning_date=row[4].value, square=row[5].value, measure_unit=row[6].value)
                 buildings.append(building)
-        Building.objects.bulk_create(buildings, ignore_conflicts=True)
+        Building.objects.bulk_create(buildings)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -132,7 +132,7 @@ def upload_contract_file(worksheet):
         for row in worksheet.iter_rows(min_row=2):
             contract = Contract(contract_id=row[0].value, contract_beginning_date=row[1].value, contract_ending_date=row[2].value)
             contracts.append(contract)
-        Contract.objects.bulk_create(contracts, ignore_conflicts=True)
+        Contract.objects.bulk_create(contracts)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -145,7 +145,7 @@ def upload_contract_building_connection_file(worksheet):
             contract_building_connection = ContractBuildingConnection(contract_id=row[0].value, building_id=row[1].value, connection_beginning_date=row[2].value,
                                                                       connection_ending_date=row[3].value)
             contract_building_connections.append(contract_building_connection)
-        ContractBuildingConnection.objects.bulk_create(contract_building_connections, ignore_conflicts=True)
+        ContractBuildingConnection.objects.bulk_create(contract_building_connections)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -160,7 +160,7 @@ def upload_fixed_asset_file(worksheet):
                                      connection_with_building_beginning_date=row[7].value, connection_with_building_ending_date=row[8].value, place_in_service_date=row[9].value,
                                      disposal_date=row[10].value)
             fixed_assets.append(fixed_asset)
-        FixedAsset.objects.bulk_create(fixed_assets, ignore_conflicts=True)
+        FixedAsset.objects.bulk_create(fixed_assets)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -172,7 +172,7 @@ def upload_service_file(worksheet):
         for row in worksheet.iter_rows(min_row=2):
             service = Service(service_id=row[0].value, service_class=row[1].value)
             services.append(service)
-        Service.objects.bulk_create(services, ignore_conflicts=True)
+        Service.objects.bulk_create(services)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -185,7 +185,7 @@ def upload_invoice_for_payment_file(worksheet):
             invoice_for_payment = InvoiceForPayment(company=row[0].value, year=row[1].value, invoice_number=row[2].value, invoice_position=row[3].value, service_id=row[4].value,
                                                     contract_id=row[5].value, invoice_reflection_in_the_accounting_system_date=row[6].value, cost_excluding_VAT=row[7].value)
             invoice_for_payments.append(invoice_for_payment)
-        InvoiceForPayment.objects.bulk_create(invoice_for_payments, ignore_conflicts=True)
+        InvoiceForPayment.objects.bulk_create(invoice_for_payments)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -202,7 +202,7 @@ def upload_distributed_invoice_for_payment_file(worksheet):
                                                                            is_used_in_rent=(row[13].value == 'X'), square=row[14].value, distribution_sum=row[15].value,
                                                                            general_ledger_account=row[16].value)
             distributed_invoice_for_payments.append(distributed_invoice_for_payment)
-        DistributedInvoiceForPayment.objects.bulk_create(distributed_invoice_for_payments, ignore_conflicts=True)
+        DistributedInvoiceForPayment.objects.bulk_create(distributed_invoice_for_payments)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -224,7 +224,7 @@ def upload_json(request, table_name):
         objects_list = []
         for i in range(len(data)):
             objects_list.append(globals()['deserialize_' + table_name](data[i]))
-        class_lookup[table_name].objects.bulk_create(objects_list, ignore_conflicts=True)
+        class_lookup[table_name].objects.bulk_create(objects_list)
         if (table_name == 'invoice_for_payment'):
             return start_distribution(objects_list)
     except Exception as err:
