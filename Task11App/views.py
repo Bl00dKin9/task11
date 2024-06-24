@@ -15,6 +15,8 @@ from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from decimal import Decimal
+from tensorflow.keras.models import load_model
+import numpy as np
 
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all()
