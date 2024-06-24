@@ -15,6 +15,10 @@ from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from decimal import Decimal
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+import tensorflow_hub as hub
+import numpy as np
 
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all()
@@ -51,6 +55,10 @@ class DistributedInvoiceForPaymentViewSet(viewsets.ModelViewSet):
     serializer_class = DistributedInvoiceForPaymentSerializer
 
 
+account_generate_model = load_model('testmodel2.h5')
+
+
+
 class_lookup = {'building': Building, 'contract': Contract, 'contract_building_connection': ContractBuildingConnection, 'fixed_asset': FixedAsset,
                         'service': Service, 'invoice_for_payment': InvoiceForPayment, 'distributed_invoice_for_payment': DistributedInvoiceForPayment}
 
@@ -59,6 +67,21 @@ serializer_class_lookup = {'building': BuildingSerializer, 'contract': ContractS
                            'fixed_asset': FixedAssetSerializer, 'service': ServiceSerializer, 'invoice_for_payment': InvoiceForPaymentSerializer,
                            'distributed_invoice_for_payment': DistributedInvoiceForPaymentWithoutIdSerializer}
 
+
+def generate_account(model, service_class, fixed_asset_class, is_used_in_main_activity, is_used_in_rent):
+  service_classes = ['S001', 'S004', 'S005', 'S008', 'S012', 'S025', 'S036', 'S038', 'S063', 'S064', 'S070', 'S076', 'S079']
+  fixed_asset_classes = ['60401018', '60401099', '60401109', '60404999', '60804001', '61907996', '61908996', '62001001', '62001M01', '62001M04', '62101001', '62101004', '91507998']
+  general_ledger_account = [7047504010, 7047504020, 7047505010, 7047505020, 7047805010, 7047805030, 7048208010, 7048208020, 7048209010, 7048209020, 7048401010, 7048401020, 7048406010, 7048406020, 7048414960, 7048414970]
+
+  try:
+    ind1 = service_classes.index(service_class)
+    ind2 = fixed_asset_classes.index(fixed_asset_class)
+
+    preg = model.predict(np.array([[ind1, ind2, is_used_in_main_activity, is_used_in_rent]]))
+    preg = np.argmax(preg)
+    return general_ledger_account[preg]
+  except Exception as err:
+    return None;
 
 
 def deserialize_building(data):
@@ -114,7 +137,6 @@ def deserialize_distributed_invoice_for_payment(data):
     return distributed_invoice_for_payment
 
 
-
 def upload_building_file(worksheet):
     buildings = []
     try:
@@ -122,7 +144,7 @@ def upload_building_file(worksheet):
                 building = Building(building_id=row[0].value, possession_beginning_date=row[1].value, possession_ending_date=row[2].value, measurement_ending_date=row[3].value,
                                     measurement_beginning_date=row[4].value, square=row[5].value, measure_unit=row[6].value)
                 buildings.append(building)
-        Building.objects.bulk_create(buildings, ignore_conflicts=True)
+        Building.objects.bulk_create(buildings)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -134,7 +156,7 @@ def upload_contract_file(worksheet):
         for row in worksheet.iter_rows(min_row=2):
             contract = Contract(contract_id=row[0].value, contract_beginning_date=row[1].value, contract_ending_date=row[2].value)
             contracts.append(contract)
-        Contract.objects.bulk_create(contracts, ignore_conflicts=True)
+        Contract.objects.bulk_create(contracts)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -147,7 +169,7 @@ def upload_contract_building_connection_file(worksheet):
             contract_building_connection = ContractBuildingConnection(contract_id=row[0].value, building_id=row[1].value, connection_beginning_date=row[2].value,
                                                                       connection_ending_date=row[3].value)
             contract_building_connections.append(contract_building_connection)
-        ContractBuildingConnection.objects.bulk_create(contract_building_connections, ignore_conflicts=True)
+        ContractBuildingConnection.objects.bulk_create(contract_building_connections)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -162,7 +184,7 @@ def upload_fixed_asset_file(worksheet):
                                      connection_with_building_beginning_date=row[7].value, connection_with_building_ending_date=row[8].value, place_in_service_date=row[9].value,
                                      disposal_date=row[10].value)
             fixed_assets.append(fixed_asset)
-        FixedAsset.objects.bulk_create(fixed_assets, ignore_conflicts=True)
+        FixedAsset.objects.bulk_create(fixed_assets)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -174,7 +196,7 @@ def upload_service_file(worksheet):
         for row in worksheet.iter_rows(min_row=2):
             service = Service(service_id=row[0].value, service_class=row[1].value)
             services.append(service)
-        Service.objects.bulk_create(services, ignore_conflicts=True)
+        Service.objects.bulk_create(services)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -187,7 +209,7 @@ def upload_invoice_for_payment_file(worksheet):
             invoice_for_payment = InvoiceForPayment(company=row[0].value, year=row[1].value, invoice_number=row[2].value, invoice_position=row[3].value, service_id=row[4].value,
                                                     contract_id=row[5].value, invoice_reflection_in_the_accounting_system_date=row[6].value, cost_excluding_VAT=row[7].value)
             invoice_for_payments.append(invoice_for_payment)
-        InvoiceForPayment.objects.bulk_create(invoice_for_payments, ignore_conflicts=True)
+        InvoiceForPayment.objects.bulk_create(invoice_for_payments)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -204,7 +226,7 @@ def upload_distributed_invoice_for_payment_file(worksheet):
                                                                            is_used_in_rent=(row[13].value == 'X'), square=row[14].value, distribution_sum=row[15].value,
                                                                            general_ledger_account=row[16].value)
             distributed_invoice_for_payments.append(distributed_invoice_for_payment)
-        DistributedInvoiceForPayment.objects.bulk_create(distributed_invoice_for_payments, ignore_conflicts=True)
+        DistributedInvoiceForPayment.objects.bulk_create(distributed_invoice_for_payments)
     except Exception as err:
         return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     return HttpResponse(status=200)
@@ -226,7 +248,7 @@ def upload_json(request, table_name):
         objects_list = []
         for i in range(len(data)):
             objects_list.append(globals()['deserialize_' + table_name](data[i]))
-        class_lookup[table_name].objects.bulk_create(objects_list, ignore_conflicts=True)
+        class_lookup[table_name].objects.bulk_create(objects_list)
         if (table_name == 'invoice_for_payment'):
             return start_distribution(objects_list)
     except Exception as err:
@@ -282,6 +304,7 @@ def start_distribution(invoice_for_payments):
                                                                                    fixed_asset_class=fixed_asset_class, fixed_asset_id=fixed_asset_id,
                                                                                    is_used_in_main_activity=is_used_in_main_activity, is_used_in_rent=is_used_in_rent,
                                                                                    square=square, distribution_sum=0)
+                    distributed_invoice_for_payment.general_ledger_account = generate_account(account_generate_model, service_class, fixed_asset_class, is_used_in_main_activity, is_used_in_rent)
                     distributed_invoice_for_payments.append(distributed_invoice_for_payment)
                     count += 1
                     square_sum += square
